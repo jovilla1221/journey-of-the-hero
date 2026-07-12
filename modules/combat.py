@@ -6,7 +6,6 @@ from typing import Tuple, Optional
 
 from modules.data import ITEMS, MONSTERS
 from modules.db import get_player, upd, add_gold, add_diamond, add_item, get_conn, get_inv, use_item
-from modules.config import AUTO_POTION_HP, AUTO_POTION_EN
 
 
 def stats(p: dict) -> Tuple[int, int]:
@@ -44,29 +43,56 @@ def auto_equip(uid: int, key: str) -> Optional[str]:
 
 
 def auto_use_consumables(uid: int) -> list:
-    from modules.config import AUTO_POTION_HP, AUTO_POTION_EN
     notes = []
     p = get_player(uid)
+    if not p:
+        return notes
     lang = p.get("lang", "id")
     inv = {i["item_key"]: i["quantity"] for i in get_inv(uid)}
-    if p["hp"] < p["max_hp"] * AUTO_POTION_HP:
-        for pot in ("big_potion", "health_potion"):
-            if inv.get(pot, 0) > 0 and use_item(uid, pot):
+
+    # ── HP low: eat food or drink potion ──
+    if p["hp"] < p["max_hp"] * 0.35:
+        # priority: best heal → potion
+        for key, heal in [("fish", 55), ("meat", 40), ("bread", 15),
+                          ("big_potion", 80), ("health_potion", 30)]:
+            if inv.get(key, 0) > 0 and use_item(uid, key):
                 p = get_player(uid)
-                from modules.data import ITEMS as ITM
-                upd(uid, hp=min(p["max_hp"], p["hp"] + ITM[pot]["heal"]))
-                notes.append(f"🧪 Auto-pakai: {ITM[pot]['name'].get(lang, pot)}")
+                upd(uid, hp=min(p["max_hp"], p["hp"] + heal))
+                notes.append(f"🍽️ {ITEMS[key]['name'].get(lang, key)} (+{heal} HP)")
                 break
+
+    # ── Energy low: drink ──
     p = get_player(uid)
-    inv = {i["item_key"]: i["quantity"] for i in get_inv(uid)}
-    if p["energy"] < p["max_energy"] * AUTO_POTION_EN:
-        for pot in ("energy_refill", "energy_potion"):
-            if inv.get(pot, 0) > 0 and use_item(uid, pot):
+    if p and p["energy"] < p["max_energy"] * 0.25:
+        inv = {i["item_key"]: i["quantity"] for i in get_inv(uid)}
+        for key, energy in [("ale", 45), ("milk", 30), ("water", 15),
+                            ("energy_refill", 50), ("energy_potion", 25)]:
+            if inv.get(key, 0) > 0 and use_item(uid, key):
                 p = get_player(uid)
-                from modules.data import ITEMS as ITM2
-                upd(uid, energy=min(p["max_energy"], p["energy"] + ITM2[pot]["energy"]))
-                notes.append(f"⚡ Auto-pakai: {ITM2[pot]['name'].get(lang, pot)}")
+                upd(uid, energy=min(p["max_energy"], p["energy"] + energy))
+                notes.append(f"🥤 {ITEMS[key]['name'].get(lang, key)} (+{energy} ⚡)")
                 break
+
+    # ── Auto-restock basic supplies (if gold allows) ──
+    p = get_player(uid)
+    if p and p.get("gold", 0) >= 200:
+        inv = {i["item_key"]: i["quantity"] for i in get_inv(uid)}
+        targets = {"bread": 3, "water": 3, "health_potion": 2, "energy_potion": 2}
+        restocked = []
+        for key, want in targets.items():
+            have = inv.get(key, 0)
+            if have < want and key in ITEMS:
+                need = want - have
+                price = ITEMS[key].get("price_gold", 0)
+                total = price * need
+                if p.get("gold", 0) >= total:
+                    add_item(uid, key, need)
+                    upd(uid, gold=p["gold"] - total)
+                    restocked.append(f"{ITEMS[key]['name'].get(lang, key)} ×{need}")
+                    p["gold"] -= total
+        if restocked:
+            notes.append(f"🛒 Auto-beli: {', '.join(restocked)}")
+
     return notes
 
 
@@ -228,7 +254,7 @@ DUEL_MID_EN = [
 DUEL_END_WIN_ID = [
     "Akhirnya *{winner}* unggul. *{loser}* angkat tangan. \"Oke, lu menang.\"",
     "Pukulan penutup! *{winner}* menang. *{loser}* ketawa lelah. \"Rematch nanti.\"",
-    "Habis. *{winner}* berdiri, *{loser}* duduk di debu. Temenan tetap temenan.",
+    "Habis. *{winner}* berdiri, *{loser}* duduk di debu. Tetep temenan.",
 ]
 DUEL_END_WIN_EN = [
     "*{winner}* takes it. *{loser}* raises hands. \"Fine, you win.\"",
@@ -238,11 +264,6 @@ DUEL_END_WIN_EN = [
 
 
 def pvp_duel_story(a: int, b: int, lang: str = "id") -> Tuple[int, int, list]:
-    """
-    Full multi-step duel narrative.
-    Returns (winner_id, loser_id, list_of_step_lines).
-    Steps: open → mid1 → mid2 → result.
-    """
     pa, pb = get_player(a), get_player(b)
     if not pa or not pb:
         return a, b, []
@@ -256,7 +277,6 @@ def pvp_duel_story(a: int, b: int, lang: str = "id") -> Tuple[int, int, list]:
         open_ = random.choice(DUEL_OPEN_ID).format(foe=bn)
         mid1 = random.choice(DUEL_MID_ID).format(foe=bn)
         mid2 = random.choice(DUEL_MID_ID).format(foe=bn)
-        # avoid same mid twice
         if mid2 == mid1:
             mid2 = random.choice(DUEL_MID_ID).format(foe=bn)
         end = random.choice(DUEL_END_WIN_ID).format(winner=wn, loser=ln)
@@ -292,7 +312,7 @@ def _try_level(uid: int) -> Optional[int]:
         (nl, need, uid),
     )
     # level-up reward: diamond or auto blessing
-    import random
+    import random as _r
     if nl % 5 == 0:
         c.execute("UPDATE players SET diamond=diamond+1 WHERE user_id=?", (uid,))
         reward = "diamond"
@@ -304,7 +324,7 @@ def _try_level(uid: int) -> Optional[int]:
         try:
             from modules.adventure import activate_blessing
             from modules.data import BLESSINGS
-            bk = random.choice(BLESSINGS)["key"]
+            bk = _r.choice(BLESSINGS)["key"]
             activate_blessing(uid, bk)
         except Exception:
             pass

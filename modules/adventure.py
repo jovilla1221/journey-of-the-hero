@@ -780,8 +780,11 @@ def tick(uid: int) -> Optional[str]:
         gold = random.randint(5, 25 + p["level"] * 5)
         add_gold(uid, gold)
         line = random.choice(FLAV["loot"][lang]) + f"\n💰 +{gold}"
-        if random.random() < 0.3:
-            pot = random.choice(["health_potion", "energy_potion"])
+        if random.random() < 0.45:
+            pot = random.choice([
+                "health_potion", "energy_potion",
+                "bread", "meat", "water", "milk",
+            ])
             add_item(uid, pot, 1)
             line += f"\n{iname(pot, lang)}"
         _diary(uid, f"Loot +{gold}")
@@ -790,10 +793,28 @@ def tick(uid: int) -> Optional[str]:
         return line
 
     if r < ENCOUNTER + REST + LOOT + TRADE:
+        # dagang: kadang jual, kadang beli makan/minum
         g = random.randint(10, 35)
-        add_gold(uid, g)
-        line = random.choice(FLAV["trade"][lang]) + f"\n💰 +{g}"
-        _diary(uid, "Dagang")
+        line = random.choice(FLAV["trade"][lang])
+        if random.random() < 0.55 and p.get("gold", 0) >= 40:
+            # auto-beli bekal di pedagang
+            buy = random.choice(["bread", "water", "meat", "milk", "health_potion", "energy_potion"])
+            price = ITEMS.get(buy, {}).get("price_gold", 30)
+            if p["gold"] >= price:
+                from modules.db import add_item as _add
+                from modules.db import upd as _upd
+                _upd(uid, gold=p["gold"] - price)
+                _add(uid, buy, 1)
+                line += f"\n🛒 Beli {iname(buy, lang)} (-{price}💰)"
+                _diary(uid, f"Beli {buy}")
+            else:
+                add_gold(uid, g)
+                line += f"\n💰 +{g}"
+                _diary(uid, "Dagang")
+        else:
+            add_gold(uid, g)
+            line += f"\n💰 +{g}"
+            _diary(uid, "Dagang")
         if extra:
             line += "\n" + "\n".join(extra)
         return line

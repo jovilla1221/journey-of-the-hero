@@ -12,12 +12,19 @@ ITEMS = {
     "steel_armor":     {"name": {"id": "🛡️ Armor Baja", "en": "🛡️ Steel Armor"}, "type": "armor", "def": 30, "drop": True},
     "scale_mail":      {"name": {"id": "🛡️ Zirah Sisik", "en": "🛡️ Scale Mail"}, "type": "armor", "def": 42, "drop": True},
     "dragon_armor":    {"name": {"id": "🛡️ Armor Naga", "en": "🛡️ Dragon Armor"}, "type": "armor", "def": 80, "price_diamond": 8, "shop_only": True},
-    "health_potion":   {"name": {"id": "🧪 Ramuan HP", "en": "🧪 HP Potion"}, "type": "consumable", "heal": 30, "drop": True},
-    "big_potion":      {"name": {"id": "🧪 Ramuan HP+", "en": "🧪 Big HP Potion"}, "type": "consumable", "heal": 80, "drop": True},
-    "energy_potion":   {"name": {"id": "⚡ Ramuan Energi", "en": "⚡ Energy Potion"}, "type": "consumable", "energy": 25, "drop": True},
+    "health_potion":   {"name": {"id": "🧪 Ramuan HP", "en": "🧪 HP Potion"}, "type": "consumable", "heal": 30, "price_gold": 50, "drop": True},
+    "big_potion":      {"name": {"id": "🧪 Ramuan HP+", "en": "🧪 Big HP Potion"}, "type": "consumable", "heal": 80, "price_gold": 150, "drop": True},
+    "energy_potion":   {"name": {"id": "⚡ Ramuan Energi", "en": "⚡ Energy Potion"}, "type": "consumable", "energy": 25, "price_gold": 40, "drop": True},
     "energy_refill":   {"name": {"id": "⚡ Energi Penuh", "en": "⚡ Full Energy"}, "type": "consumable", "energy": 50, "price_diamond": 1, "shop_only": True},
     "exp_booster":     {"name": {"id": "✨ Booster EXP", "en": "✨ EXP Booster"}, "type": "buff", "exp_mult": 2.0, "duration_h": 24, "price_diamond": 2, "shop_only": True},
     "lucky_charm":     {"name": {"id": "🍀 Jimat Hoki", "en": "🍀 Lucky Charm"}, "type": "buff", "exp_mult": 1.0, "duration_h": 12, "price_diamond": 3, "shop_only": True},
+    # ── FOOD & DRINK ───────────────────────────────────────────
+    "bread":           {"name": {"id": "🍞 Roti", "en": "🍞 Bread"}, "type": "food", "heal": 15, "price_gold": 20, "drop": True},
+    "meat":            {"name": {"id": "🍖 Daging", "en": "🍖 Meat"}, "type": "food", "heal": 40, "price_gold": 60, "drop": True},
+    "fish":            {"name": {"id": "🐟 Ikan", "en": "🐟 Fish"}, "type": "food", "heal": 55, "price_gold": 100, "drop": True},
+    "water":           {"name": {"id": "💧 Air", "en": "💧 Water"}, "type": "drink", "energy": 15, "price_gold": 15, "drop": True},
+    "milk":            {"name": {"id": "🥛 Susu", "en": "🥛 Milk"}, "type": "drink", "energy": 30, "price_gold": 40, "drop": True},
+    "ale":             {"name": {"id": "🍺 Bir", "en": "🍺 Ale"}, "type": "drink", "energy": 45, "price_gold": 80, "drop": True},
 }
 
 # pets: can drop on road or via contract
