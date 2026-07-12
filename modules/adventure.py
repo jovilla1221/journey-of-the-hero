@@ -453,7 +453,8 @@ def auto_social(uid: int) -> Optional[str]:
             _diary(uid, f"Auto friend {o['name']}")
             break
 
-    # 3) Auto guild from fictional kingdoms — no buttons, just join on the road
+    # 3) Auto guild from fictional kingdoms
+    guild_joined = False
     if not p.get("guild_id") and random.random() < 0.4:
         from modules.data import KINGDOMS
         gname = random.choice(KINGDOMS)
@@ -461,33 +462,47 @@ def auto_social(uid: int) -> Optional[str]:
             existing = conn.execute("SELECT id FROM guilds WHERE name=?", (gname,)).fetchone()
             if existing:
                 gid = existing["id"]
-                conn.execute(
-                    "INSERT OR IGNORE INTO guild_members(guild_id, user_id, role) VALUES (?,?, 'member')",
-                    (gid, uid),
-                )
+                conn.execute("INSERT OR IGNORE INTO guild_members(guild_id, user_id, role) VALUES (?,?, 'member')", (gid, uid))
                 conn.execute("UPDATE guilds SET member_count=member_count+1 WHERE id=?", (gid,))
                 conn.execute("UPDATE players SET guild_id=? WHERE user_id=?", (gid, uid))
             else:
-                conn.execute(
-                    "INSERT INTO guilds(name, owner_id, member_count) VALUES (?,?,1)",
-                    (gname, uid),
-                )
+                conn.execute("INSERT INTO guilds(name, owner_id, member_count) VALUES (?,?,1)", (gname, uid))
                 gid = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-                conn.execute(
-                    "INSERT INTO guild_members(guild_id, user_id, role) VALUES (?,?, 'owner')",
-                    (gid, uid),
-                )
+                conn.execute("INSERT INTO guild_members(guild_id, user_id, role) VALUES (?,?, 'owner')", (gid, uid))
                 conn.execute("UPDATE players SET guild_id=? WHERE user_id=?", (gid, uid))
-            notes.append(
-                f"🏰 Masuk *{gname}*!"
-                if lang == "id"
-                else f"🏰 Joined *{gname}*!"
-            )
+            notes.append(f"🏰 Masuk *{gname}*!" if lang == "id" else f"🏰 Joined *{gname}*!")
             _diary(uid, f"Auto guild: {gname}")
+            guild_joined = True
         except Exception:
             pass
 
-    # 4) Auto zone — always pick best unlocked zone, sometimes wander
+    # 4) Auto switch guild ~8%
+    if not guild_joined and p.get("guild_id") and random.random() < 0.08:
+        old_gid = p["guild_id"]
+        conn.execute("DELETE FROM guild_members WHERE guild_id=? AND user_id=?", (old_gid, uid))
+        conn.execute("UPDATE guilds SET member_count=member_count-1 WHERE id=?", (old_gid,))
+        conn.execute("UPDATE players SET guild_id=NULL WHERE user_id=?", (uid,))
+        _diary(uid, "Keluar dari guild")
+        from modules.data import KINGDOMS
+        gname = random.choice(KINGDOMS)
+        try:
+            existing = conn.execute("SELECT id FROM guilds WHERE name=?", (gname,)).fetchone()
+            if existing:
+                gid = existing["id"]
+                conn.execute("INSERT OR IGNORE INTO guild_members(guild_id, user_id, role) VALUES (?,?, 'member')", (gid, uid))
+                conn.execute("UPDATE guilds SET member_count=member_count+1 WHERE id=?", (gid,))
+                conn.execute("UPDATE players SET guild_id=? WHERE user_id=?", (gid, uid))
+            else:
+                conn.execute("INSERT INTO guilds(name, owner_id, member_count) VALUES (?,?,1)", (gname, uid))
+                gid = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+                conn.execute("INSERT INTO guild_members(guild_id, user_id, role) VALUES (?,?, 'owner')", (gid, uid))
+                conn.execute("UPDATE players SET guild_id=? WHERE user_id=?", (gid, uid))
+            notes.append(f"🏰 Pindah ke *{gname}*!" if lang == "id" else f"🏰 Switched to *{gname}*!")
+            _diary(uid, f"Switch guild: {gname}")
+        except Exception:
+            pass
+
+    # 5) Auto zone — always pick best unlocked zone, sometimes wander
     from modules.data import ZONES
     current_zone = p.get("zone") or "plains"
     zone_order = [
@@ -791,6 +806,14 @@ def tick(uid: int) -> Optional[str]:
             ])
             add_item(uid, pot, 1)
             line += f"\n{iname(pot, lang)}"
+        # temple materials drop
+        try:
+            from modules.temple import maybe_drop_material
+            mat = maybe_drop_material(uid, p.get("zone", "plains"))
+            if mat:
+                line += f"\n🔨 +{iname(mat, lang)}"
+        except Exception:
+            pass
         _diary(uid, f"Loot +{gold}")
         if extra:
             line += "\n" + "\n".join(extra)
@@ -893,23 +916,20 @@ def _check_ach_all(uid: int):
 
 
 def _auto_temple(uid: int, lang: str, notes: list) -> list:
-    """Auto-build or donate to temple. Returns notes[+temple msg]."""
+    """Auto-build or level-up temple if materials available."""
     p = get_player(uid)
     if not p:
         return notes
     try:
-        from modules.temple import temple_build, temple_donate
-        # auto-build if enough gold
-        if not p.get("temple_built") and (p.get("gold") or 0) >= 1000:
-            msg = temple_build(uid, lang)
-            if "🏛️" in msg or "💰" in msg:
-                notes.append(msg.split("\n")[0] if "\n" in msg else msg)
-            _diary(uid, f"🏛️ Auto-built temple")
-        # auto-donate tick if temple exists & gold >= 2000
-        elif p.get("temple_built") and (p.get("gold") or 0) >= 2000:
-            msg = temple_donate(uid, lang)
-            if "Sumbang" in msg or "Donated" in msg or "🚀" in msg:
-                notes.append(msg.split("\n")[0] if "\n" in msg else msg)
+        from modules.temple import do_build, do_donate, do_upgrade
+        if not p.get("temple_built"):
+            msg = do_build(uid)
+            if "Dibangun" in msg or "Built" in msg:
+                notes.append(msg.split("\n")[0])
+        else:
+            msg = do_donate(uid)
+            if "level" in msg.lower():
+                notes.append(msg.split("\n")[0])
     except Exception:
         pass
     return notes

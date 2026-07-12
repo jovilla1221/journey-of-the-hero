@@ -257,6 +257,19 @@ def hero_card(p: dict) -> str:
         if g:
             guild_line = f"\n🏰 {g['name']}"
 
+    # Temple line
+    temple_line = ""
+    if p.get("temple_built"):
+        try:
+            from modules.temple import temple_progress_text
+            temple_line = temple_progress_text(uid)
+        except Exception:
+            lv = p.get("temple_level") or 0
+            total = 10
+            n = max(1, min((min(lv, 50) * 10) // 50, 10))
+            bar = "▰" * n + "▱" * (total - n)
+            temple_line = f"\n🏛️ *{p.get('temple_name', '')}* Lv.{lv} {bar}"
+
     sj = ""
     if p.get("sidejob_key"):
         job = SIDEJOBS.get(p["sidejob_key"], {})
@@ -266,14 +279,14 @@ def hero_card(p: dict) -> str:
         total = len(loc.get("steps", [])) if isinstance(loc, dict) else 5
         sj = f"\n🛠 {title} ({min(step+1, total)}/{total})"
 
-    status = "🟢 di jalan" if p.get("adventuring") else ("🟡 istirahat" if lang == "id" else "🟡 resting")
+    status = "🟢 di jalan" if p.get("adventuring") else (("🟡 istirahat") if lang == "id" else "🟡 resting")
     prest_line = f"\n⭐ Prestige *{prestige}*" if prestige else ""
     return (
         f"*{GAME_NAME}*\n"
         f"━━━━━━━━━━━━━━\n"
         f"🦸 *{p['name']}*\n"
         f"⚡ Dewa: *{deity}*\n"
-        f"🗺️ {zone}{guild_line}\n"
+        f"🗺️ {zone}{guild_line}{temple_line}\n"
         f"{status}{sj}{prest_line}\n"
         f"🔥 Streak: *{streak}*\n"
         f"━━━━━━━━━━━━━━\n"

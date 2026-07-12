@@ -18,6 +18,14 @@ ITEMS = {
     "energy_refill":   {"name": {"id": "⚡ Energi Penuh", "en": "⚡ Full Energy"}, "type": "consumable", "energy": 50, "price_diamond": 1, "shop_only": True},
     "exp_booster":     {"name": {"id": "✨ Booster EXP", "en": "✨ EXP Booster"}, "type": "buff", "exp_mult": 2.0, "duration_h": 24, "price_diamond": 2, "shop_only": True},
     "lucky_charm":     {"name": {"id": "🍀 Jimat Hoki", "en": "🍀 Lucky Charm"}, "type": "buff", "exp_mult": 1.0, "duration_h": 12, "price_diamond": 3, "shop_only": True},
+    # ── TEMPLE MATERIALS ───────────────────────────────────
+    "stone":           {"name": {"id": "🪨 Batu", "en": "🪨 Stone"}, "type": "material", "price_gold": 50, "drop": True},
+    "wood":            {"name": {"id": "🪵 Kayu", "en": "🪵 Wood"}, "type": "material", "price_gold": 40, "drop": True},
+    "crystal":         {"name": {"id": "💎 Kristal", "en": "💎 Crystal"}, "type": "material", "price_gold": 200, "drop": True},
+    "sacred_cloth":    {"name": {"id": "🧵 Kain Suci", "en": "🧵 Sacred Cloth"}, "type": "material", "price_gold": 300, "drop": True},
+    "holy_water":      {"name": {"id": "💧 Air Suci", "en": "💧 Holy Water"}, "type": "material", "price_gold": 150, "drop": True},
+    "gold_leaf":       {"name": {"id": "🍃 Emas Tipis", "en": "🍃 Gold Leaf"}, "type": "material", "price_gold": 500, "drop": True},
+    "ancient_brick":   {"name": {"id": "🧱 Batu Tua", "en": "🧱 Ancient Brick"}, "type": "material", "price_gold": 1000, "drop": True},
     # ── FOOD & DRINK ───────────────────────────────────────────
     "bread":           {"name": {"id": "🍞 Roti", "en": "🍞 Bread"}, "type": "food", "heal": 15, "price_gold": 20, "drop": True},
     "meat":            {"name": {"id": "🍖 Daging", "en": "🍖 Meat"}, "type": "food", "heal": 40, "price_gold": 60, "drop": True},

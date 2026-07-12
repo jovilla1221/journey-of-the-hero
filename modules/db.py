@@ -212,6 +212,8 @@ def init_db():
             "onboard_step": "ALTER TABLE players ADD COLUMN onboard_step TEXT DEFAULT 'lang'",
             "diamond": "ALTER TABLE players ADD COLUMN diamond INTEGER DEFAULT 0",
             "temple_built": "ALTER TABLE players ADD COLUMN temple_built TEXT",
+            "temple_name": "ALTER TABLE players ADD COLUMN temple_name TEXT",
+            "temple_type": "ALTER TABLE players ADD COLUMN temple_type TEXT DEFAULT 'shrine'",
             "temple_level": "ALTER TABLE players ADD COLUMN temple_level INTEGER DEFAULT 0",
             "temple_gold": "ALTER TABLE players ADD COLUMN temple_gold INTEGER DEFAULT 0",
         }

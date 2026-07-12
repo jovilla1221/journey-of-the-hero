@@ -13,8 +13,7 @@ from modules.db import (
 )
 from modules.combat import pvp_fight, auto_equip
 from modules.adventure import tick, maybe_daily_report, activate_blessing, do_prestige
-from modules.talk import process_talk, hero_reply
-from modules.temple import temple_text, temple_build, temple_donate, temple_info
+from modules.temple import build_text, do_build, do_donate, do_upgrade, temple_menu, temple_progress_text, maybe_drop_material
 from modules.ui import (
     kb, shop_kb, hero_card, welcome, ranking_text,
     shop_page, bless_page, friends_page, achievements_page, friend_ach_page,
@@ -359,34 +358,22 @@ async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # Temple actions
-    if data in ("temple_build", "temple_donate", "temple_close"):
+    if data in ("temple_build", "temple_donate", "temple_close", "temple_upgrade"):
         if data == "temple_build":
-            text_t = temple_build(uid, lang)
+            text_t = do_build(uid)
+        elif data == "temple_upgrade":
+            text_t = do_upgrade(uid)
         elif data == "temple_donate":
-            text_t = temple_donate(uid, lang)
+            text_t = do_donate(uid)
         else:
-            text_t = temple_text(uid, lang)
-        # rebuild inline menu
+            text_t = build_text(uid, lang)
         p2 = get_player(uid)
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-        rows = []
-        if not p2.get("temple_built"):
-            if p2.get("gold", 0) >= 1000:
-                rows.append([InlineKeyboardButton(
-                    "🛠 Bangun Candi (💰1000)" if lang == "id" else "🛠 Build (💰1000)",
-                    callback_data="temple_build",
-                )])
-        else:
-            if p2.get("gold", 0) >= 500:
-                rows.append([InlineKeyboardButton(
-                    "🙏 Sumbang gold" if lang == "id" else "🙏 Donate gold",
-                    callback_data="temple_donate",
-                )])
-        rows.append([InlineKeyboardButton("🔙 Tutup" if lang == "id" else "🔙 Close", callback_data="temple_close")])
+        _, markup = temple_menu(uid, lang)
         try:
-            await q.edit_message_text(text_t, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(rows))
+            await q.edit_message_text(text_t, parse_mode="Markdown", reply_markup=markup)
         except Exception:
-            await q.answer(_("done" if lang == "id" else "done"), show_alert=False)
+            await q.answer("done", show_alert=False)
         return
 
 
