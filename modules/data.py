@@ -417,6 +417,7 @@ T = {
     "btn_wiki": {"id": "📚 Wiki", "en": "📚 Wiki"},
     "btn_lang": {"id": "🌐 Bahasa", "en": "🌐 Language"},
     "btn_talk": {"id": "💬 Ngobrol", "en": "💬 Talk"},
+    "btn_temple": {"id": "🏛️ Candi", "en": "🏛️ Temple"},
     "btn_next": {"id": "Next ▶️", "en": "Next ▶️"},
     "btn_back": {"id": "◀️ Back", "en": "◀️ Back"},
     "btn_select": {"id": "✅ Pilih", "en": "✅ Select"},
@@ -437,6 +438,28 @@ T = {
             "Type below, or `cancel` to exit.\n\n"
             "_Your message goes to hero's diary too._"
         ),
+    },
+    "temple_intro": {
+        "id": (
+            "🏛️ *Candi untuk {deity}*\n"
+            "━━━━━━━━━━━━━━\n"
+            "Hero-mu bangun {name}. Tingkat {level}.\n"
+            "{progress_desc}\n\n"
+            "Setiap 500 gold disumbang, candi naik level.\n"
+            "Tiap level: HP +10, ATK/DEF +1, EXP boost +2% (max 50%)."
+        ),
+        "en": (
+            "🏛️ *Temple for {deity}*\n"
+            "━━━━━━━━━━━━━━\n"
+            "Hero built {name}. Level {level}.\n"
+            "{progress_desc}\n\n"
+            "Every 500 gold donated → temple levels up.\n"
+            "Per level: HP +10, ATK/DEF +1, EXP +2% (max 50%)."
+        ),
+    },
+    "temple_none": {
+        "id": "Belum ada candi. Hero-{hero} belum bangun apa-apa buat {deity}... 🏛️ *Bangun Candi* (1000 Gold)",
+        "en": "No temple yet. Hero {hero} hasn't built anything for {deity}... 🏛️ *Build Temple* (1000 Gold)",
     },
     "no_friends": {"id": "Belum ada temen. Ketemu orang di jalan dulu!", "en": "No friends yet. Meet people on the road!"},
     "friend_header": {"id": "👥 *Teman* ({n})", "en": "👥 *Friends* ({n})"},

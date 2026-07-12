@@ -20,6 +20,7 @@ def kb(lang: str) -> ReplyKeyboardMarkup:
             [KeyboardButton(tr(lang, "btn_rank")), KeyboardButton(tr(lang, "btn_wiki"))],
             [KeyboardButton(tr(lang, "btn_bless")), KeyboardButton(tr(lang, "btn_prestige"))],
             [KeyboardButton(tr(lang, "btn_talk"))],
+            [KeyboardButton(tr(lang, "btn_temple"))],
             [KeyboardButton(tr(lang, "btn_lang"))],
         ],
         resize_keyboard=True,

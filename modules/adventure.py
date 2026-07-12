@@ -704,6 +704,8 @@ def tick(uid: int) -> Optional[str]:
     # side job progress (prioritize)
     if p.get("sidejob_key"):
         notes = auto_use_consumables(uid)
+        # temple auto (also commit auto_use)
+        notes = _auto_temple(uid, lang, notes)
         p = get_player(uid)
         upd(uid, energy=min(p["max_energy"], p["energy"] + ENERGY_REGEN),
             hp=min(p["max_hp"], p["hp"] + HP_REGEN),
@@ -715,6 +717,8 @@ def tick(uid: int) -> Optional[str]:
             return msg
 
     notes = auto_use_consumables(uid)
+    # temple auto (build + donate) on main tick
+    notes = _auto_temple(uid, lang, notes)
     p = get_player(uid)
 
     new_en = min(p["max_energy"], p["energy"] + ENERGY_REGEN)
@@ -886,3 +890,26 @@ def _check_ach_all(uid: int):
     p = get_player(uid)
     if p:
         _check_achievements(uid, p)
+
+
+def _auto_temple(uid: int, lang: str, notes: list) -> list:
+    """Auto-build or donate to temple. Returns notes[+temple msg]."""
+    p = get_player(uid)
+    if not p:
+        return notes
+    try:
+        from modules.temple import temple_build, temple_donate
+        # auto-build if enough gold
+        if not p.get("temple_built") and (p.get("gold") or 0) >= 1000:
+            msg = temple_build(uid, lang)
+            if "🏛️" in msg or "💰" in msg:
+                notes.append(msg.split("\n")[0] if "\n" in msg else msg)
+            _diary(uid, f"🏛️ Auto-built temple")
+        # auto-donate tick if temple exists & gold >= 2000
+        elif p.get("temple_built") and (p.get("gold") or 0) >= 2000:
+            msg = temple_donate(uid, lang)
+            if "Sumbang" in msg or "Donated" in msg or "🚀" in msg:
+                notes.append(msg.split("\n")[0] if "\n" in msg else msg)
+    except Exception:
+        pass
+    return notes

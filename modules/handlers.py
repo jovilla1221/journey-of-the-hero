@@ -14,6 +14,7 @@ from modules.db import (
 from modules.combat import pvp_fight, auto_equip
 from modules.adventure import tick, maybe_daily_report, activate_blessing, do_prestige
 from modules.talk import process_talk, hero_reply
+from modules.temple import temple_text, temple_build, temple_donate, temple_info
 from modules.ui import (
     kb, shop_kb, hero_card, welcome, ranking_text,
     shop_page, bless_page, friends_page, achievements_page, friend_ach_page,
@@ -357,6 +358,37 @@ async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
         return
 
+    # Temple actions
+    if data in ("temple_build", "temple_donate", "temple_close"):
+        if data == "temple_build":
+            text_t = temple_build(uid, lang)
+        elif data == "temple_donate":
+            text_t = temple_donate(uid, lang)
+        else:
+            text_t = temple_text(uid, lang)
+        # rebuild inline menu
+        p2 = get_player(uid)
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        rows = []
+        if not p2.get("temple_built"):
+            if p2.get("gold", 0) >= 1000:
+                rows.append([InlineKeyboardButton(
+                    "🛠 Bangun Candi (💰1000)" if lang == "id" else "🛠 Build (💰1000)",
+                    callback_data="temple_build",
+                )])
+        else:
+            if p2.get("gold", 0) >= 500:
+                rows.append([InlineKeyboardButton(
+                    "🙏 Sumbang gold" if lang == "id" else "🙏 Donate gold",
+                    callback_data="temple_donate",
+                )])
+        rows.append([InlineKeyboardButton("🔙 Tutup" if lang == "id" else "🔙 Close", callback_data="temple_close")])
+        try:
+            await q.edit_message_text(text_t, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(rows))
+        except Exception:
+            await q.answer(_("done" if lang == "id" else "done"), show_alert=False)
+        return
+
 
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
@@ -455,6 +487,11 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text in (tr(lang, "btn_wiki"), "📚 Wiki", "Wiki"):
         text_w, markup = wiki_menu(lang)
         await msg.reply_text(text_w, parse_mode="Markdown", reply_markup=markup)
+        return
+
+    if text in (tr(lang, "btn_temple"), "🏛️ Candi", "🏛️ Temple", "Temple"):
+        text_t, markup = temple_menu(uid, lang)
+        await msg.reply_text(text_t, parse_mode="Markdown", reply_markup=markup)
         return
 
     if text in (tr(lang, "btn_lang"), "🌐 Bahasa", "🌐 Language", "Language"):
@@ -587,3 +624,29 @@ async def _send_discovery_pixels(bot, uid: int, p: dict):
                 )
             except Exception:
                 pass
+
+
+async def temple_menu(uid: int, lang: str) -> tuple:
+    """Show temple status + action buttons (build/donate)."""
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+    info = temple_info(uid, lang)
+    rows = []
+    p = get_player(uid)
+    if not info or not info["built"]:
+        text = temple_build(uid, lang)
+        if p and p.get("gold", 0) >= 1000:
+            rows.append([InlineKeyboardButton(
+                "🛠 Bangun Candi (💰1000)" if lang == "id" else "🛠 Build Temple (💰1000)",
+                callback_data="temple_build",
+            )])
+        rows.append([InlineKeyboardButton("▶️ Sumbang Lagi" if lang == "id" else "▶️ Donate More", callback_data="temple_donate")])
+        rows.append([InlineKeyboardButton("🔙 Tutup" if lang == "id" else "🔙 Close", callback_data="temple_close")])
+    else:
+        text = temple_text(uid, lang)
+        if p and p.get("gold", 0) >= 500:
+            rows.append([InlineKeyboardButton(
+                f"🙏 Sumbang gold" if lang == "id" else f"🙏 Donate gold",
+                callback_data="temple_donate",
+            )])
+        rows.append([InlineKeyboardButton("🔙 Tutup" if lang == "id" else "🔙 Close", callback_data="temple_close")])
+    return text, InlineKeyboardMarkup(rows)
