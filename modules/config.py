@@ -1,10 +1,15 @@
 import os
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
-ADMIN_IDS = [6247336698]
+# Google Generative Language API key (Gemini). Image models may hit free-tier 429;
+# image_gen falls back to local PIL pixel sprites automatically.
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+IMAGE_MODEL = os.environ.get("IMAGE_MODEL", "gemini-2.5-flash-image")
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "rpg_game.db")
+CACHE_DIR = os.path.join(BASE_DIR, ".pixel_cache")
 GAME_NAME = "Journey of the Hero"
+ADMIN_IDS = [6247336698]
 
 TICK_SEC = 40
 ENERGY_COST = 1

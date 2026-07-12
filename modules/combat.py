@@ -165,7 +165,8 @@ def do_battle(uid: int, mkey: str, mon: dict) -> dict:
     if won:
         try:
             from modules.db import discover
-            new_mon = discover(uid, mkey, "monster")
+            dtype = "boss" if mon.get("hard") else "monster"
+            new_mon = discover(uid, mkey, dtype)
         except Exception:
             pass
 

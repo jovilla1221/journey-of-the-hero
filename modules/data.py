@@ -70,15 +70,37 @@ MONSTERS = {
     # void (high)
     "void_spawn":  {"name": {"id": "🌌 Void Spawn", "en": "🌌 Void Spawn"}, "hp": 280, "atk": 40, "def": 20, "exp": 260, "gold": 350, "min_level": 12, "zone": "void", "hard": True, "diamond_chance": 0.4},
     "void_knight": {"name": {"id": "🌑 Void Knight", "en": "🌑 Void Knight"}, "hp": 350, "atk": 48, "def": 28, "exp": 320, "gold": 420, "min_level": 15, "zone": "void", "hard": True, "diamond_chance": 0.5},
+    # swamp
+    "croc":        {"name": {"id": "🐊 Buaya Rawa", "en": "🐊 Swamp Croc"}, "hp": 95, "atk": 18, "def": 12, "exp": 55, "gold": 70, "min_level": 4, "zone": "swamp", "hard": False, "diamond_chance": 0.03},
+    "leech":       {"name": {"id": "🪱 Lintah Raksasa", "en": "🪱 Giant Leech"}, "hp": 70, "atk": 22, "def": 6, "exp": 48, "gold": 55, "min_level": 5, "zone": "swamp", "hard": False, "diamond_chance": 0.04},
+    "swamp_lord":  {"name": {"id": "🐸 Raja Rawa", "en": "🐸 Swamp Lord"}, "hp": 200, "atk": 28, "def": 16, "exp": 140, "gold": 180, "min_level": 7, "zone": "swamp", "hard": True, "diamond_chance": 0.2},
+    # desert
+    "scorpion":    {"name": {"id": "🦂 Kalajengking", "en": "🦂 Scorpion"}, "hp": 85, "atk": 20, "def": 10, "exp": 50, "gold": 65, "min_level": 5, "zone": "desert", "hard": False, "diamond_chance": 0.04},
+    "mummy":       {"name": {"id": "🧟 Mumi", "en": "🧟 Mummy"}, "hp": 140, "atk": 18, "def": 20, "exp": 80, "gold": 100, "min_level": 6, "zone": "desert", "hard": False, "diamond_chance": 0.08},
+    "sand_wyrm":   {"name": {"id": "🐍 Cacing Pasir", "en": "🐍 Sand Wyrm"}, "hp": 240, "atk": 32, "def": 18, "exp": 170, "gold": 220, "min_level": 9, "zone": "desert", "hard": True, "diamond_chance": 0.28},
+    # crystal caves
+    "crystal_bat": {"name": {"id": "💎 Kelelawar Kristal", "en": "💎 Crystal Bat"}, "hp": 100, "atk": 22, "def": 8, "exp": 70, "gold": 90, "min_level": 8, "zone": "crystal_caves", "hard": False, "diamond_chance": 0.1},
+    "gem_golem":   {"name": {"id": "💠 Golem Permata", "en": "💠 Gem Golem"}, "hp": 260, "atk": 26, "def": 30, "exp": 180, "gold": 240, "min_level": 10, "zone": "crystal_caves", "hard": True, "diamond_chance": 0.32},
+    # sky isles
+    "cloud_spirit":{"name": {"id": "☁️ Roh Awan", "en": "☁️ Cloud Spirit"}, "hp": 120, "atk": 28, "def": 10, "exp": 95, "gold": 110, "min_level": 9, "zone": "sky_isles", "hard": False, "diamond_chance": 0.12},
+    "sky_seraph":  {"name": {"id": "🪽 Seraph Langit", "en": "🪽 Sky Seraph"}, "hp": 300, "atk": 38, "def": 22, "exp": 240, "gold": 300, "min_level": 12, "zone": "sky_isles", "hard": True, "diamond_chance": 0.38},
+    # abyss
+    "abyss_worm":  {"name": {"id": "🪱 Cacing Abyss", "en": "🪱 Abyss Worm"}, "hp": 320, "atk": 42, "def": 24, "exp": 280, "gold": 360, "min_level": 14, "zone": "abyss", "hard": True, "diamond_chance": 0.42},
+    "abyss_lord":  {"name": {"id": "👁️ Lord Abyss", "en": "👁️ Abyss Lord"}, "hp": 450, "atk": 55, "def": 32, "exp": 400, "gold": 500, "min_level": 18, "zone": "abyss", "hard": True, "diamond_chance": 0.55},
 }
 
 ZONES = {
-    "plains":   {"name": {"id": "🌾 Dataran", "en": "🌾 Plains"}, "min_level": 1, "unlock_prestige": 0},
-    "forest":   {"name": {"id": "🌲 Hutan", "en": "🌲 Forest"}, "min_level": 3, "unlock_prestige": 0},
-    "cave":     {"name": {"id": "🕳️ Gua", "en": "🕳️ Cave"}, "min_level": 5, "unlock_prestige": 0},
-    "mountain": {"name": {"id": "⛰️ Gunung", "en": "⛰️ Mountain"}, "min_level": 7, "unlock_prestige": 0},
-    "ruins":    {"name": {"id": "🏛️ Reruntuhan", "en": "🏛️ Ruins"}, "min_level": 6, "unlock_prestige": 0},
-    "void":     {"name": {"id": "🌌 Void", "en": "🌌 Void"}, "min_level": 12, "unlock_prestige": 1},
+    "plains":        {"name": {"id": "🌾 Dataran", "en": "🌾 Plains"}, "min_level": 1, "unlock_prestige": 0},
+    "forest":        {"name": {"id": "🌲 Hutan", "en": "🌲 Forest"}, "min_level": 3, "unlock_prestige": 0},
+    "swamp":         {"name": {"id": "🐸 Rawa", "en": "🐸 Swamp"}, "min_level": 4, "unlock_prestige": 0},
+    "cave":          {"name": {"id": "🕳️ Gua", "en": "🕳️ Cave"}, "min_level": 5, "unlock_prestige": 0},
+    "desert":        {"name": {"id": "🏜️ Gurun", "en": "🏜️ Desert"}, "min_level": 5, "unlock_prestige": 0},
+    "ruins":         {"name": {"id": "🏛️ Reruntuhan", "en": "🏛️ Ruins"}, "min_level": 6, "unlock_prestige": 0},
+    "mountain":      {"name": {"id": "⛰️ Gunung", "en": "⛰️ Mountain"}, "min_level": 7, "unlock_prestige": 0},
+    "crystal_caves": {"name": {"id": "💎 Gua Kristal", "en": "💎 Crystal Caves"}, "min_level": 8, "unlock_prestige": 0},
+    "sky_isles":     {"name": {"id": "☁️ Kepulauan Langit", "en": "☁️ Sky Isles"}, "min_level": 9, "unlock_prestige": 0},
+    "void":          {"name": {"id": "🌌 Void", "en": "🌌 Void"}, "min_level": 12, "unlock_prestige": 1},
+    "abyss":         {"name": {"id": "🕳️ Abyss", "en": "🕳️ Abyss"}, "min_level": 14, "unlock_prestige": 2},
 }
 
 SIDEJOBS = {
@@ -387,11 +409,28 @@ T = {
     "btn_prestige": {"id": "⭐ Prestige", "en": "⭐ Prestige"},
     "btn_wiki": {"id": "📚 Wiki", "en": "📚 Wiki"},
     "btn_lang": {"id": "🌐 Bahasa", "en": "🌐 Language"},
+    "btn_talk": {"id": "💬 Ngobrol", "en": "💬 Talk"},
     "btn_next": {"id": "Next ▶️", "en": "Next ▶️"},
     "btn_back": {"id": "◀️ Back", "en": "◀️ Back"},
     "btn_select": {"id": "✅ Pilih", "en": "✅ Select"},
     "btn_view_ach": {"id": "🏅 Lihat Achievements", "en": "🏅 View Achievements"},
     "btn_prestige_go": {"id": "⭐ Prestige Sekarang", "en": "⭐ Prestige Now"},
+    "talk_intro": {
+        "id": (
+            "💬 *Ngobrol sama Hero*\n"
+            "━━━━━━━━━━━━━━\n"
+            "Dewa bisa ngomong langsung, hero bales.\n"
+            "Tulis pesan di bawah, atau ketik `batal` buat keluar.\n\n"
+            "_Pesanmu masuk ke diary hero juga._"
+        ),
+        "en": (
+            "💬 *Talk to Hero*\n"
+            "━━━━━━━━━━━━━━\n"
+            "Deity speaks, hero replies.\n"
+            "Type below, or `cancel` to exit.\n\n"
+            "_Your message goes to hero's diary too._"
+        ),
+    },
     "no_friends": {"id": "Belum ada temen. Ketemu orang di jalan dulu!", "en": "No friends yet. Meet people on the road!"},
     "friend_header": {"id": "👥 *Teman* ({n})", "en": "👥 *Friends* ({n})"},
     "friend_detail": {

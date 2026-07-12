@@ -13,6 +13,7 @@ from modules.db import (
 )
 from modules.combat import pvp_fight, auto_equip
 from modules.adventure import tick, maybe_daily_report, activate_blessing, do_prestige
+from modules.talk import process_talk, hero_reply
 from modules.ui import (
     kb, shop_kb, hero_card, welcome, ranking_text,
     shop_page, bless_page, friends_page, achievements_page, friend_ach_page,
@@ -466,37 +467,53 @@ async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # Talk to hero
+    if text in (tr(lang, "btn_talk"), "💬 Ngobrol", "💬 Talk", "Talk"):
+        context.user_data["await_talk"] = True
+        await msg.reply_text(
+            tr(lang, "talk_intro"),
+            parse_mode="Markdown",
+            reply_markup=kb(lang),
+        )
+        return
+
+    if context.user_data.get("await_talk"):
+        context.user_data["await_talk"] = False
+        if text.lower() in ("batal", "cancel", "exit", "keluar"):
+            await msg.reply_text(
+                "Ngobrol selesai." if lang == "id" else "Chat ended.",
+                reply_markup=kb(lang),
+            )
+            return
+        out = process_talk(uid, text, lang)
+        await msg.reply_text(
+            out,
+            parse_mode="Markdown",
+            reply_markup=kb(lang),
+        )
+        return
+
     await msg.reply_text(tr(lang, "unknown"), reply_markup=kb(lang))
 
 
 async def adventure_job(context: ContextTypes.DEFAULT_TYPE):
-    from modules.db import _LOCK
     bot = context.bot
     for uid in active_users():
         try:
-            daily = None
-            line = None
-            p = None
-            lang = "id"
-            with _LOCK:
-                daily = maybe_daily_report(uid)
-                if daily:
-                    p = get_player(uid)
-                    lang = (p.get("lang") or "id") if p else "id"
-                else:
-                    line = tick(uid)
-                    if not line:
-                        continue
-                    p = get_player(uid)
-                    lang = (p.get("lang") or "id") if p else "id"
+            daily = maybe_daily_report(uid)
             if daily:
+                p = get_player(uid)
+                lang = (p.get("lang") or "id") if p else "id"
                 await bot.send_message(
                     chat_id=uid, text=daily, parse_mode="Markdown",
                     reply_markup=kb(lang),
                 )
                 continue
+            line = tick(uid)
             if not line:
                 continue
+            p = get_player(uid)
+            lang = (p.get("lang") or "id") if p else "id"
             await _send_discovery_pixels(bot, uid, p or {})
             await bot.send_message(
                 chat_id=uid, text=line, parse_mode="Markdown",
@@ -507,26 +524,60 @@ async def adventure_job(context: ContextTypes.DEFAULT_TYPE):
 
 
 async def _send_discovery_pixels(bot, uid: int, p: dict):
-    """Send pixel art for any new discoveries this tick."""
-    from modules.db import is_discovered, discover
-    from pixel_art import get_sprite, sprite_desc
+    """Send pixel art for any new discoveries this tick (one image per event)."""
+    from modules.image_gen import generate_image, caption_for
+    from modules.data import iname, zname
     lang = p.get("lang") or "id"
-    # Check recent discoveries in DB and send if not yet sent
     c = get_conn()
     rows = c.execute(
-        """SELECT discovery_key, discovery_type FROM discoveries 
-           WHERE user_id=? AND discovered_at > datetime('now', '-5 minutes')
-           ORDER BY discovered_at DESC LIMIT 5""",
+        """SELECT discovery_key, discovery_type, discovered_at FROM discoveries
+           WHERE user_id=? AND discovered_at > datetime('now', '-3 minutes')
+           ORDER BY discovered_at ASC LIMIT 6""",
         (uid,),
     ).fetchall()
-    c.close()
+    seen = set()
+    fresh = []
     for row in rows:
-        key, dtype = row["discovery_key"], row["discovery_type"]
-        # send pixel art for this discovery
-        img = get_sprite(key)
+        sig = (row["discovery_type"], row["discovery_key"])
+        if sig in seen:
+            continue
+        seen.add(sig)
+        fresh.append(row)
+    c.close()
+
+    for row in fresh:
+        key = row["discovery_key"]
+        dtype = row["discovery_type"]
+        # pretty name
+        if dtype == "monster":
+            from modules.data import MONSTERS
+            nm = (MONSTERS.get(key, {}).get("name") or {}).get(lang) \
+                or (MONSTERS.get(key, {}).get("name") or {}).get("id") or key
+        elif dtype == "boss":
+            from modules.data import MONSTERS
+            nm = (MONSTERS.get(key, {}).get("name") or {}).get(lang) or key
+        elif dtype == "pet":
+            nm = iname(key, lang)
+        elif dtype == "item":
+            nm = iname(key, lang)
+        elif dtype == "zone":
+            nm = zname(key, lang)
+        elif dtype == "sidejob":
+            from modules.data import SIDEJOBS
+            job = SIDEJOBS.get(key, {})
+            loc = job.get(lang) or job.get("id", {})
+            nm = (loc or {}).get("title", key)
+        elif dtype == "achievement":
+            from modules.data import ACHIEVEMENTS
+            av = ACHIEVEMENTS.get(key, {})
+            nm = (av.get("name") or {}).get(lang) or (av.get("name") or {}).get("id") or key
+        else:
+            nm = key
+
+        img = generate_image(key, dtype, nm)
         if img:
+            caption = caption_for(dtype, nm, lang)
             try:
-                caption = sprite_desc(key, lang) or f"🎨 {key}"
                 await bot.send_photo(
                     chat_id=uid,
                     photo=img,

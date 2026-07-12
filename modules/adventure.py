@@ -83,6 +83,12 @@ def sidejob_progress(uid: int) -> Optional[str]:
 def start_sidejob(uid: int) -> str:
     key = random.choice(list(SIDEJOBS.keys()))
     upd(uid, sidejob_key=key, sidejob_step=0)
+    # mark side job as a discovery so we can send pixel art on first encounter
+    try:
+        from modules.db import discover
+        discover(uid, key, "sidejob")
+    except Exception:
+        pass
     return sidejob_progress(uid) or "…"
 
 
@@ -216,6 +222,12 @@ def _check_achievements(uid: int, p: dict):
 def _unlock_ach(conn, uid, ak, av):
     conn.execute("INSERT OR IGNORE INTO achievements (user_id, ach_key) VALUES (?,?)", (uid, ak))
     conn.commit()
+    # mark as discovery so we can send pixel art on first unlock
+    try:
+        from modules.db import discover
+        discover(uid, ak, "achievement")
+    except Exception:
+        pass
 
 
 # ── BLESSINGS ──
@@ -478,7 +490,10 @@ def auto_social(uid: int) -> Optional[str]:
     # 4) Auto zone — always pick best unlocked zone, sometimes wander
     from modules.data import ZONES
     current_zone = p.get("zone") or "plains"
-    zone_order = ["plains", "forest", "cave", "mountain", "ruins", "void"]
+    zone_order = [
+        "plains", "forest", "swamp", "cave", "desert", "ruins",
+        "mountain", "crystal_caves", "sky_isles", "void", "abyss",
+    ]
     unlocked = []
     for zk in zone_order:
         z = ZONES.get(zk)
@@ -499,6 +514,12 @@ def auto_social(uid: int) -> Optional[str]:
             msg = f"🗺️ Nyasar ke {zname(chosen_zone, lang)}"
         notes.append(msg if lang == "id" else msg)
         _diary(uid, f"Zone {chosen_zone}")
+        # first visit → discovery image
+        try:
+            from modules.db import discover
+            discover(uid, chosen_zone, "zone")
+        except Exception:
+            pass
 
     # 5) Auto guildmate: after a battle, sometimes meet a player on the road -> friend
     if random.random() < 0.12:
