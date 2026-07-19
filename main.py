@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
-"""
-Journey of the Hero — modular Telegram idle RPG
-"""
+"""Journey of the Hero — modular Telegram idle RPG"""
 
 import logging
+import os
+from pathlib import Path
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+
+# Load .env
+_env = Path(__file__).resolve().parent / ".env"
+if _env.exists():
+    for line in _env.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
 from modules.config import BOT_TOKEN, TICK_SEC
 from modules.db import init_db, active_users
@@ -26,7 +35,7 @@ def main():
     else:
         logging.warning("job_queue missing")
 
-    print("⚔️ Journey of the Hero (modular) running…")
+    print("Journey of the Hero (modular) running...")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 

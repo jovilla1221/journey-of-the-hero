@@ -237,8 +237,9 @@ def do_build(uid: int) -> str:
     if not p:
         return "?"
     lang = p.get("lang") or "id"
-    if p.get("temple_built"):
-        # upgrade level
+    # already has a temple (either temple_built or temple_name/temple_type)
+    if p.get("temple_built") or p.get("temple_name") or p.get("temple_type"):
+        # upgrade level instead
         return do_donate(uid)
     # build shrine
     shrine = TEMPLE_TYPES[0]
@@ -255,6 +256,20 @@ def do_build(uid: int) -> str:
     name = _random_name(deity, lang)
     upd(uid, temple_built=1, temple_type="shrine", temple_name=name, temple_level=1, temple_gold=0)
     _diary(uid, f"🏠 Hero membangun *{shrine['name'][lang]} {name}*! Material habis dipakai.")
+
+    # → Personality: temple event (devotion + wisdom)
+    try:
+        from modules.personality import apply_event
+        pe = apply_event(get_player(uid), "temple")
+        if pe:
+            udb = get_conn()
+            for k, v in pe.items():
+                udb.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+            udb.commit()
+            udb.close()
+    except Exception:
+        pass
+
     return build_text(uid, lang)
 
 

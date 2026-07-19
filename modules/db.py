@@ -216,6 +216,10 @@ def init_db():
             "temple_type": "ALTER TABLE players ADD COLUMN temple_type TEXT DEFAULT 'shrine'",
             "temple_level": "ALTER TABLE players ADD COLUMN temple_level INTEGER DEFAULT 0",
             "temple_gold": "ALTER TABLE players ADD COLUMN temple_gold INTEGER DEFAULT 0",
+            "personality_traits": "ALTER TABLE players ADD COLUMN personality_traits TEXT DEFAULT '[]'",
+            "personality_points": "ALTER TABLE players ADD COLUMN personality_points TEXT DEFAULT '{}'",
+            "personality_title": "ALTER TABLE players ADD COLUMN personality_title TEXT",
+            "personality_updated_at": "ALTER TABLE players ADD COLUMN personality_updated_at TEXT",
         }
 
         for col, sql in _migrations.items():
@@ -343,6 +347,19 @@ def update_streak(uid: int) -> int:
             (new_streak, today, uid),
         )
         c.commit()
+
+        # → Personality: streak event
+        if new_streak > 0:
+            try:
+                from modules.personality import apply_event
+                pe = apply_event(get_player(uid), "streak")
+                if pe:
+                    for k, v in pe.items():
+                        c.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+                    c.commit()
+            except Exception:
+                pass
+
         return new_streak
 
 

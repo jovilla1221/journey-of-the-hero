@@ -190,6 +190,20 @@ def check_contract(uid: int) -> Optional[str]:
         msg = f"📜 *{ctr['name'].get(lang, ctr['key'])}* selesai! 💰+{ctr['reward_gold']} 💎+{ctr['reward_diamond']}"
         upd(uid, contract_key=None, contract_progress=0)
         _diary(uid, "Kontrak mingguan selesai")
+
+        # → Personality: contract event (discipline + honor)
+        try:
+            from modules.personality import apply_event
+            pe = apply_event(get_player(uid), "contract")
+            if pe:
+                udb = get_conn()
+                for k, v in pe.items():
+                    udb.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+                udb.commit()
+                udb.close()
+        except Exception:
+            pass
+
         return msg
     return None
 
@@ -339,6 +353,20 @@ def do_prestige(uid: int) -> Optional[str]:
         weapon=None, armor=None, pet=None, adventuring=1)
     _diary(uid, f"Prestige {n}!")
     _check_achievements(uid, get_player(uid))
+
+    # → Personality: prestige event
+    try:
+        from modules.personality import apply_event
+        pe = apply_event(get_player(uid), "prestige")
+        if pe:
+            udb = get_conn()
+            for k, v in pe.items():
+                udb.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+            udb.commit()
+            udb.close()
+    except Exception:
+        pass
+
     return tr(lang, "prestige_ok", n=n)
 
 
@@ -366,6 +394,13 @@ def find_pet(uid: int) -> Optional[str]:
     # auto pet contract 3 days
     start = date.today().isoformat()
     end = (date.today() + timedelta(days=3)).isoformat()
+
+    # record pet discovery for image gen
+    from modules.db import discover
+    try:
+        discover(uid, pk, "pet")
+    except Exception:
+        pass
     conn = get_conn()
     conn.execute(
         "INSERT INTO pet_contracts (user_id, pet_key, start_date, end_date) VALUES (?,?,?,?)",
@@ -376,6 +411,20 @@ def find_pet(uid: int) -> Optional[str]:
     conn.close()
 
     _diary(uid, f"Nemu pet: {name} (auto kontrak 3 hari)")
+
+    # → Personality: pet_found event
+    try:
+        from modules.personality import apply_event
+        pe = apply_event(get_player(uid), "pet_found")
+        if pe:
+            udb = get_conn()
+            for k, v in pe.items():
+                udb.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+            udb.commit()
+            udb.close()
+    except Exception:
+        pass
+
     lines = [
         random.choice(FLAV.get("pet_find", {}).get(lang, ["🐾 Pet baru!"])),
         f"🐾 {name}",
@@ -674,6 +723,20 @@ def duel_progress(uid: int) -> Optional[str]:
             c.close()
         except Exception:
             pass
+
+        # → Personality: duel win/lose
+        try:
+            from modules.personality import apply_event
+            pe = apply_event(get_player(uid), "duel_win" if winner == uid else "duel_lose")
+            if pe:
+                udb = get_conn()
+                for k, v in pe.items():
+                    udb.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+                udb.commit()
+                udb.close()
+        except Exception:
+            pass
+
         upd(uid, duel_foe_id=None, duel_step=0, duel_payload=None)
         _diary(uid, f"Duel selesai vs {foe_name}")
     else:

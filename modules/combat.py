@@ -155,6 +155,34 @@ def do_battle(uid: int, mkey: str, mon: dict) -> dict:
     c.commit()
     c.close()
 
+    # → Personality: battle event
+    try:
+        from modules.personality import apply_event
+        event = "hard_kill" if mon.get("hard") else "win"
+        pe = apply_event(p, event)
+        if pe:
+            udb = get_conn()
+            for k, v in pe.items():
+                udb.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+            udb.commit()
+            udb.close()
+    except Exception:
+        pass
+
+    # → Personality: lose event (hero defeated)
+    if not won:
+        try:
+            from modules.personality import apply_event
+            pe = apply_event(p, "lose")
+            if pe:
+                udb = get_conn()
+                for k, v in pe.items():
+                    udb.execute(f"UPDATE players SET {k}=? WHERE user_id=?", (v, uid))
+                udb.commit()
+                udb.close()
+        except Exception:
+            pass
+
     lvl = _try_level(uid) if won else None
 
     # log battle

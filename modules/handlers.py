@@ -222,7 +222,14 @@ async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Wiki
     if data == "menu_wiki":
         text, markup = wiki_menu(lang)
-        await q.edit_message_text(text, parse_mode="Markdown", reply_markup=markup)
+        if q.message and q.message.photo:
+            try:
+                await q.message.delete()
+            except Exception:
+                pass
+            await context.bot.send_message(chat_id=uid, text=text, parse_mode="Markdown", reply_markup=markup)
+        else:
+            await q.edit_message_text(text, parse_mode="Markdown", reply_markup=markup)
         return
 
     if data.startswith("wiki_"):
@@ -235,8 +242,51 @@ async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             idx = int(parts[2])
         except Exception:
             idx = 0
-        text, markup = wiki_page(cat, lang, idx)
-        await q.edit_message_text(text, parse_mode="Markdown", reply_markup=markup)
+        res = wiki_page(cat, lang, idx)
+        if len(res) == 3:
+            text, markup, img_info = res
+        else:
+            text, markup = res
+            img_info = None
+
+        img_bytes = None
+        if img_info:
+            from modules.image_gen import generate_image_sync, caption_for
+            key, dtype, nm = img_info
+            prompt = f"{nm} pixel art game rpg sprite"
+            img_bytes = generate_image_sync(prompt)
+
+        if img_bytes:
+            from telegram import InputMediaPhoto
+            if q.message and q.message.photo:
+                try:
+                    await q.edit_message_media(
+                        media=InputMediaPhoto(media=img_bytes, caption=text, parse_mode="Markdown"),
+                        reply_markup=markup,
+                    )
+                    return
+                except Exception:
+                    pass
+            try:
+                await q.message.delete()
+            except Exception:
+                pass
+            await context.bot.send_photo(
+                chat_id=uid,
+                photo=img_bytes,
+                caption=text,
+                parse_mode="Markdown",
+                reply_markup=markup,
+            )
+        else:
+            if q.message and q.message.photo:
+                try:
+                    await q.message.delete()
+                except Exception:
+                    pass
+                await context.bot.send_message(chat_id=uid, text=text, parse_mode="Markdown", reply_markup=markup)
+            else:
+                await q.edit_message_text(text, parse_mode="Markdown", reply_markup=markup)
         return
 
     # Friend accept
@@ -549,7 +599,7 @@ async def adventure_job(context: ContextTypes.DEFAULT_TYPE):
 
 async def _send_discovery_pixels(bot, uid: int, p: dict):
     """Send pixel art for any new discoveries this tick (one image per event)."""
-    from modules.image_gen import generate_image, caption_for
+    from modules.image_gen import generate_image_sync, caption_for
     from modules.data import iname, zname
     lang = p.get("lang") or "id"
     c = get_conn()
@@ -598,7 +648,7 @@ async def _send_discovery_pixels(bot, uid: int, p: dict):
         else:
             nm = key
 
-        img = generate_image(key, dtype, nm)
+        img = generate_image_sync(f"{nm} pixel art game rpg sprite")
         if img:
             caption = caption_for(dtype, nm, lang)
             try:
@@ -614,26 +664,6 @@ async def _send_discovery_pixels(bot, uid: int, p: dict):
 
 
 async def temple_menu(uid: int, lang: str) -> tuple:
-    """Show temple status + action buttons (build/donate)."""
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-    info = temple_info(uid, lang)
-    rows = []
-    p = get_player(uid)
-    if not info or not info["built"]:
-        text = temple_build(uid, lang)
-        if p and p.get("gold", 0) >= 1000:
-            rows.append([InlineKeyboardButton(
-                "🛠 Bangun Candi (💰1000)" if lang == "id" else "🛠 Build Temple (💰1000)",
-                callback_data="temple_build",
-            )])
-        rows.append([InlineKeyboardButton("▶️ Sumbang Lagi" if lang == "id" else "▶️ Donate More", callback_data="temple_donate")])
-        rows.append([InlineKeyboardButton("🔙 Tutup" if lang == "id" else "🔙 Close", callback_data="temple_close")])
-    else:
-        text = temple_text(uid, lang)
-        if p and p.get("gold", 0) >= 500:
-            rows.append([InlineKeyboardButton(
-                f"🙏 Sumbang gold" if lang == "id" else f"🙏 Donate gold",
-                callback_data="temple_donate",
-            )])
-        rows.append([InlineKeyboardButton("🔙 Tutup" if lang == "id" else "🔙 Close", callback_data="temple_close")])
-    return text, InlineKeyboardMarkup(rows)
+    """Show temple — delegate to modules.temple.temple_menu."""
+    from modules.temple import temple_menu as tm
+    return tm(uid, lang)

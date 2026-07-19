@@ -1,6 +1,12 @@
 import os
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
+# Image generation settings
+# Pollinations.ai - free, no key, decent quality (10-30s)
+POLLINATIONS_API_URL = os.environ.get("POLLINATIONS_API_URL", "https://image.pollinations.ai")
+# Fallback to local PIL pixel sprites if Pollinations fails/slow
+IMAGE_CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".pixel_cache")
+IMAGE_TIMEOUT = int(os.environ.get("IMAGE_TIMEOUT", "25"))  # seconds
 # Google Generative Language API key (Gemini). Image models may hit free-tier 429;
 # image_gen falls back to local PIL pixel sprites automatically.
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")

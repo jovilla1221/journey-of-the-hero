@@ -279,6 +279,10 @@ def hero_card(p: dict) -> str:
         total = len(loc.get("steps", [])) if isinstance(loc, dict) else 5
         sj = f"\n🛠 {title} ({min(step+1, total)}/{total})"
 
+    # Personality
+    from modules.personality import personality_text
+    pers_line = personality_text(p)
+
     status = "🟢 di jalan" if p.get("adventuring") else (("🟡 istirahat") if lang == "id" else "🟡 resting")
     prest_line = f"\n⭐ Prestige *{prestige}*" if prestige else ""
     return (
@@ -298,7 +302,9 @@ def hero_card(p: dict) -> str:
         f"━━━━━━━━━━━━━━\n"
         f"🗡️ {w}\n"
         f"🛡️ {a}\n"
-        f"🐾 {pet}"
+        f"🐾 {pet}\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"{pers_line}"
     )
 
 
@@ -400,7 +406,7 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
     if cat == "monsters":
         keys = list(MONSTERS.keys())
         if not keys:
-            return "—", InlineKeyboardMarkup([])
+            return "—", InlineKeyboardMarkup([]), None
         index = max(0, min(index, len(keys) - 1))
         k = keys[index]
         m = MONSTERS[k]
@@ -408,7 +414,7 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
         hard = ("musuh sulit" if m.get("hard") else "musuh biasa") if lang == "id" else ("hard foe" if m.get("hard") else "common foe")
         if lang == "id":
             para = (
-                f"👹 *{nm}*\n━━━━━━━━━━━━━━\n"
+                f"👹 *{nm}* ({index+1}/{len(keys)})\n━━━━━━━━━━━━━━\n"
                 f"{hard} yang muncul di {zname(m.get('zone') or 'plains', lang)} mulai level {m['min_level']}. "
                 f"HP {m['hp']}, ATK {m['atk']}, DEF {m['def']}. "
                 f"Kalau menang dapet ⭐{m['exp']} EXP, 💰{m['gold']} gold."
@@ -417,14 +423,15 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
                 para += f"\n\n_punya *{int(m['diamond_chance']*100)}%* jebol 💎!_"
         else:
             para = (
-                f"👹 *{nm}*\n━━━━━━━━━━━━━━\n"
+                f"👹 *{nm}* ({index+1}/{len(keys)})\n━━━━━━━━━━━━━━\n"
                 f"A {hard} found in {zname(m.get('zone') or 'plains', lang)} at Lv {m['min_level']}+. "
                 f"HP {m['hp']}, ATK {m['atk']}, DEF {m['def']}. "
                 f"Rewards ⭐{m['exp']} EXP, 💰{m['gold']} gold."
             )
             if m.get("diamond_chance"):
                 para += f"\n\n_{int(m['diamond_chance']*100)}% diamond chance!_"
-        return para, _wiki_nav("monsters", index, len(keys))
+        dtype = "boss" if m.get("hard") else "monster"
+        return para, _wiki_nav("monsters", index, len(keys)), (k, dtype, nm)
 
     if cat == "items":
         keys = list(ITEMS.keys())
@@ -462,7 +469,7 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
                 f"Type *{it.get('type', '—')}*. Bonus: {bonus_txt}.\n\n"
                 f"Source: {src}."
             )
-        return para, _wiki_nav("items", index, len(keys))
+        return para, _wiki_nav("items", index, len(keys)), (k, "item", nm)
 
     if cat == "pets":
         keys = list(PETS.keys())
@@ -497,7 +504,7 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
                 f"Acquired: {src}.\n\n"
                 f"_Auto equipped + auto 3-day contract on the road._"
             )
-        return para, _wiki_nav("pets", index, len(keys))
+        return para, _wiki_nav("pets", index, len(keys)), (k, "pet", nm)
 
     if cat == "zones":
         keys = list(ZONES.keys())
@@ -507,19 +514,19 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
         nm = zname(zk, lang)
         if lang == "id":
             para = (
-                f"🗺️ *{nm}*\n━━━━━━━━━━━━━━\n"
+                f"🗺️ *{nm}* ({index+1}/{len(keys)})\n━━━━━━━━━━━━━━\n"
                 f"Zona yang kebuka dari level {z['min_level']} dengan prestige minimal {z.get('unlock_prestige', 0)}. "
                 f"Musuh di {nm} makin kuat makin dalem."
                 f"\n\n_Hero ganti zona otomatis naik level, kadang nyasar random._"
             )
         else:
             para = (
-                f"🗺️ *{nm}*\n━━━━━━━━━━━━━━\n"
+                f"🗺️ *{nm}* ({index+1}/{len(keys)})\n━━━━━━━━━━━━━━\n"
                 f"Zone unlocked at level {z['min_level']}, prestige {z.get('unlock_prestige', 0)}. "
                 f"Enemies get tougher the deeper you go."
                 f"\n\n_Hero auto-switches zones as levels progress, sometimes wanders randomly._"
             )
-        return para, _wiki_nav("zones", index, len(keys))
+        return para, _wiki_nav("zones", index, len(keys)), (zk, "zone", nm)
 
     if cat == "sidejobs":
         keys = list(SIDEJOBS.keys())
@@ -545,7 +552,7 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
                 f"💰 {g1}-{g2} · ⭐ {e1}-{e2}.\n\n"
                 f"Steps:\n" + "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps))
             )
-        return para, _wiki_nav("sidejobs", index, len(keys))
+        return para, _wiki_nav("sidejobs", index, len(keys)), (k, "sidejob", title)
 
     if cat == "blessings":
         items = BLESSINGS
@@ -568,19 +575,19 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
             eff += f" ⏱ {b.get('hours', 6)}h"
         if lang == "id":
             para = (
-                f"🙏 *{name}*\n━━━━━━━━━━━━━━\n"
+                f"🙏 *{name}* ({index+1}/{len(items)})\n━━━━━━━━━━━━━━\n"
                 f"Berkah dari dewa. Efek: {eff}.\n\n"
                 f"_Pencet tombol Blessing, pilih salah satu → langsung aktif!_\n"
                 f"Cooldown tiap pake ~15 menit."
             )
         else:
             para = (
-                f"🙏 *{name}*\n━━━━━━━━━━━━━━\n"
+                f"🙏 *{name}* ({index+1}/{len(items)})\n━━━━━━━━━━━━━━\n"
                 f"Blessing from your deity. Effect: {eff}.\n\n"
                 f"_Hit Blessing button, pick one → activates immediately!_\n"
                 f"Cooldown ~15 min per use."
             )
-        return para, _wiki_nav("blessings", index, len(items))
+        return para, _wiki_nav("blessings", index, len(items)), None
 
     if cat == "contracts":
         items = WEEKLY_CONTRACTS
@@ -589,19 +596,19 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
         name = (c.get("name") or {}).get(lang) or (c.get("name") or {}).get("id") or c.get("key", "?")
         if lang == "id":
             para = (
-                f"📜 *{name}*\n━━━━━━━━━━━━━━\n"
+                f"📜 *{name}* ({index+1}/{len(items)})\n━━━━━━━━━━━━━━\n"
                 f"Mingguan: capai target *{c['target']}*." if c.get("target") else ""
                 f"Hadiah: 💰{c['reward_gold']} + 💎{c['reward_diamond']}.\n\n"
                 f"_Kontrak baru tiap minggu. Dicek otomatis waktu perjalanan._"
             )
         else:
             para = (
-                f"📜 *{name}*\n━━━━━━━━━━━━━━\n"
+                f"📜 *{name}* ({index+1}/{len(items)})\n━━━━━━━━━━━━━━\n"
                 f"Weekly: reach target *{c['target']}*." if c.get("target") else ""
                 f"Reward: 💰{c['reward_gold']} + 💎{c['reward_diamond']}.\n\n"
                 f"_New contract every week. Auto-checked while adventuring._"
             )
-        return para, _wiki_nav("contracts", index, len(items))
+        return para, _wiki_nav("contracts", index, len(items)), None
 
     if cat == "prestige":
         if lang == "id":
@@ -622,9 +629,9 @@ def wiki_page(cat: str, lang: str, index: int = 0) -> tuple:
                 "Void zone becomes easier to unlock.\n\n"
                 "_You're the deity — you decide when it's time._"
             )
-        return para, InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Wiki", callback_data="menu_wiki")]])
+        return para, InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Wiki", callback_data="menu_wiki")]]), None
 
-    return "—", InlineKeyboardMarkup([])
+    return "—", InlineKeyboardMarkup([]), None
 
 
 def _wiki_nav(cat: str, index: int, total: int) -> InlineKeyboardMarkup:
