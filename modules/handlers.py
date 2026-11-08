@@ -1,10 +1,16 @@
 """Telegram handlers — friends list, achievements, prestige, wiki."""
 
 import logging
+import sys
+from pathlib import Path
 from datetime import datetime
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+
+# Add shared module path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / 'shared'))
+from forcesub_ptb import force_sub
 
 from modules.config import PRESTIGE_MIN_LEVEL
 from modules.data import ITEMS, tr, iname, BLESSINGS, WEEKLY_CONTRACTS
@@ -21,6 +27,7 @@ from modules.ui import (
 )
 
 
+@force_sub
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     u = update.effective_user
     p = goc(u.id, u.username or "", u.full_name or "Hero")
@@ -53,6 +60,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+@force_sub
 async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     await q.answer()
@@ -427,6 +435,7 @@ async def on_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
+@force_sub
 async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
     if not msg or not msg.text:

@@ -20,12 +20,19 @@ from modules.config import BOT_TOKEN, TICK_SEC
 from modules.db import init_db, active_users
 from modules.handlers import cmd_start, on_cb, on_text, adventure_job
 
+# Load force-sub check handler
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / 'shared'))
+from forcesub_ptb import force_sub_check  # noqa: E402
+
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     init_db()
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(CallbackQueryHandler(force_sub_check, pattern='^forcesub_check$'))
     app.add_handler(CallbackQueryHandler(on_cb))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
 

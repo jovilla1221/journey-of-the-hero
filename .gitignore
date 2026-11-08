@@ -10,3 +10,8 @@ qris_static.png
 *.log
 .DS_Store
 .hermes/
+node_modules/
+.venv/
+*.db-shm
+*.db-wal
+*.session
